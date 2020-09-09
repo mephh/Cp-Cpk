@@ -4,8 +4,7 @@ from matplotlib import pyplot as plt
 from scipy.stats import norm
 import math
 
-
-data_file = "HAB_mosfety.txt"
+data_file = "pozioma.txt"
 
 def init():
     global mean, std_dev, cp, cpk, data_input, low_limit, high_limit
@@ -20,32 +19,23 @@ def init():
     plot_hist(low_limit, high_limit)
 
 def plot_hist(lowlimit, highlimit):
-    # dist = pd.DataFrame(np.random.normal(loc=mean, scale=std_dev, size=(1000,2)))
     dist = pd.Series(data_input)
-    dist.agg(['min', 'max', 'mean', 'std']).round(decimals=2)
-    # print(dist)
-    rmean = round(mean,3)
-    rstd = round(std_dev,3)
-    rcp = round(cp, 3)
-    rcpk = round(cpk, 3)
 
     fig, ax = plt.subplots()
-    plt.xticks(range(int(low_limit), int(high_limit), 20))
-    plt.xlim(int(low_limit)*0.95, int(high_limit)*1.05)
-    bin_width = 0.3
-    n = math.ceil((dist.max() - dist.min())/bin_width)
-    hist_title = "Mean: {} Std_dev: {} Cp: {} Cpk: {}".format(rmean,rstd,rcp,rcpk)
-
+    plt.xticks([lowlimit, highlimit])
+    plt.xlim(int(low_limit)*0.7, int(high_limit)*1.3)
+    bin_width = 2
+    n = math.ceil(dist.max() - dist.min()/bin_width)
     title = ("Mean: %.3f" %mean, " Std_dev: %.3f" %std_dev, " Cp: %.3f" %cp, " Cpk: %.3f" %cpk)
     h_title = ""
     h_title = h_title.join(title)
-
-    # dist.plot.kde(ax=ax, legend=False, title=("Mean: "+str(mean)+" Std_dev: "+str(std_dev)+" Cp: "+str(cp)+" Cpk: "+str(cpk)))
-    dist.plot.kde(ax=ax, legend=False,
-                  title=h_title)
-
+    dist.plot.kde(ax=ax, legend=False, title=h_title)
     dist.plot.hist(density=True, ax=ax, bins=n)
+
     plt.grid(True)
+    plt.axvline(lowlimit)
+    plt.axvline(highlimit)
+
     image_name = data_file.split('.').pop(0)
     plt.savefig(image_name+'.png')
     plt.show()
