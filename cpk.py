@@ -4,36 +4,38 @@ from matplotlib import pyplot as plt
 from scipy.stats import norm
 import math
 
-data_file = "pozioma.txt"
+data_file = "inceon.txt"
 
 def init():
-    global mean, std_dev, cp, cpk, data_input, low_limit, high_limit
+    global mean, std_dev, cp, cpk, data_input, low_limit, high_limit #do przerobienia, na globalach aby bylo, lepiej przekazywac zmienne do funkcji
     low_limit = get_input("Podaj dolny limit")
     high_limit = get_input("Podaj gorny limit")
-    data_input = convert_txt(data_file)
-    data_input = np.array(data_input).astype(float)
+    data_input = convert_txt(data_file) #przepisanie pliku z pomiarami do listy
+    data_input = np.array(data_input).astype(float) #przepisanie do ciagu numpy jako float, inaczej wyskoczy blad przy tworzeniu serii ponizej
     mean = calculate_mean(data_input)
     std_dev = calculate_Standard_dev(data_input)
     cp = calculate_Cp(high_limit, low_limit)
-    cpk = calculate_Cpk(high_limit, low_limit)
+    cpk = calculate_Cpk(high_limit, low_limit)  # chyba lepiej przerobic to na 1 funkcje, TODO!
     plot_hist(low_limit, high_limit)
 
 def plot_hist(lowlimit, highlimit):
-    dist = pd.Series(data_input)
+    dist = pd.Series(data_input)                #swtorzenie serii bo dane 1 wymiarowe
 
-    fig, ax = plt.subplots()
-    plt.xticks([lowlimit, highlimit])
-    plt.xlim(int(low_limit)*0.7, int(high_limit)*1.3)
-    bin_width = 2
-    n = math.ceil(dist.max() - dist.min()/bin_width)
+    fig, ax = plt.subplots()                    #stworzenie pustego wykresu
+    plt.xticks([lowlimit, highlimit])           #punkty na osi x
+    plt.xlim(int(low_limit)*0.7, int(high_limit)*1.3)   #min i max na osi x
+    bin_width = (max(dist)-min(dist))/divide_by(mean)   #proba automatycznego dobrania szerokosci binu - nie dziala jeszcze w tej postaci
+    print(bin_width)
+    # n = math.ceil(dist.max() - dist.min()/bin_width)
+    n = np.arange(min(dist), max(dist) + bin_width, bin_width)  #wyliczenie ilosci binow
     title = ("Mean: %.3f" %mean, " Std_dev: %.3f" %std_dev, " Cp: %.3f" %cp, " Cpk: %.3f" %cpk)
     h_title = ""
-    h_title = h_title.join(title)
-    dist.plot.kde(ax=ax, legend=False, title=h_title)
-    dist.plot.hist(density=True, ax=ax, bins=n)
+    h_title = h_title.join(title)               #join bo title powyzej jest lista
+    dist.plot.kde(ax=ax, legend=False, title=h_title) #kernel density estimate - krzywa na wykresie
+    dist.plot.hist(density=True, ax=ax, bins=n, rwidth=0.95)    #rysuj na ax, szerokosc binu 95%
 
     plt.grid(True)
-    plt.axvline(lowlimit)
+    plt.axvline(lowlimit)                       #linie proste na wykresie oznaczajace limity
     plt.axvline(highlimit)
 
     image_name = data_file.split('.').pop(0)
@@ -41,7 +43,7 @@ def plot_hist(lowlimit, highlimit):
     plt.show()
 
 def convert_txt(input_file):
-    try:
+    try:    #przepisanie pliku do listy
         with open(input_file, "r") as in_f:
             values = []
             for line in in_f:
@@ -52,7 +54,7 @@ def convert_txt(input_file):
         return False
 
 def get_input(question):
-    while True:
+    while True:         #stackoverflow :) sprawdzanie czy wprowadzono liczbe, brak innych zabezpieczen
         try:
             print(question)
             a = input()
@@ -98,6 +100,25 @@ def calculate_Cpk(usl, lsl):
     except Exception as e:
         basic_error_handler("Can't calculate Cpk. Check input data!", e)
         return False
+
+def divide_by(string_to_parse): #do wyznaczenia liczby binow
+    value = ""
+    string_to_parse = check_if_text(string_to_parse)
+    try:
+        value = len(string_to_parse.split('.').pop(0))
+        print("value:" +str(value))
+    except:
+        value = len(string_to_parse)
+    return value
+
+def check_if_text(string_to_parse):     #convert na stringa
+    try:
+        if(type(string_to_parse) != "str"):
+            string_to_parse = str(string_to_parse)
+        return string_to_parse
+    except Exception:
+        print("cant parse variable to string: "+ str(Exception))
+        return None
 
 def basic_error_handler(message, error, text = "", text1 = "", text2 = ""):
     print(message + "  | Error code: " + str(error))
